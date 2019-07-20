@@ -1,11 +1,6 @@
 #!/bin/bash
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-#curl --silent -X POST http://127.0.0.1:17566/json_rpc -d '{"jsonrpc":"2.0","id":"0","method":"add_peer","params":{"host":"206.81.2.15"}}' > /dev/null
-#curl --silent -X POST http://127.0.0.1:17566/json_rpc -d '{"jsonrpc":"2.0","id":"0","method":"add_peer","params":{"host":"206.81.2.16"}}' > /dev/null
-
-#exit 0
-
 digitalocean=14061
 google=15169
 amazon1=14618
@@ -21,6 +16,8 @@ function scan_asn()
         range_list=("${whois[@]:i:j}")
         dotnet ${dir}/Bin/Release/Nerva.NodeFinder.dll ${range_list[@]}
     done
+
+    #todo: after each run check for connections and quit if connected
 }
 
 echo "Digital Ocean"
