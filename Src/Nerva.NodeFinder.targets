@@ -20,5 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../External/Nerva.Rpc.CSharp/Src/Nerva.Rpc/Nerva.Rpc.csproj" />
+    <ProjectReference Include="../../External/Nerva.Levin.CSharp/Src/Nerva.Levin/Nerva.Levin.csproj" />
   </ItemGroup>
 </Project>

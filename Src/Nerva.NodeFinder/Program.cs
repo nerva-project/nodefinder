@@ -8,6 +8,7 @@ using Nerva.Rpc.Daemon;
 using Log = AngryWasp.Logger.Log;
 using AngryWasp.Helpers;
 using System.Net;
+using Nerva.Levin.Requests;
 
 namespace Nerva.NodeFinder
 {
@@ -106,7 +107,8 @@ namespace Nerva.NodeFinder
                 {
                     if (tcp.Connected)
                     {
-                        LevinProtocol.SendCommand(tcp, null);
+                        NetworkStream ns = tcp.GetStream();
+                        //todo: send handshake to confirm there is a node listening
                         tcp.GetStream().Close();
                         elapsed = watch.ElapsedMilliseconds;
                     }

@@ -1,3 +1,6 @@
 [submodule "External/Nerva.Rpc.CSharp"]
 	path = External/Nerva.Rpc.CSharp
 	url = https://bitbucket.org/nerva-project/nerva.rpc.csharp
+[submodule "External/Nerva.Levin.CSharp"]
+	path = External/Nerva.Levin.CSharp
+	url = https://bitbucket.org/nerva-project/nerva.levin.csharp
