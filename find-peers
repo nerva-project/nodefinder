@@ -10,7 +10,7 @@ cloudflare=AS13335
 function scan_asn()
 {
     whois=($(whois -h whois.radb.net -- "-i origin AS$1" | grep -Eo "([0-9.]+){4}/[0-9]+"))
-    j=1024
+    j=256
     for((i=0; i < "${#whois[@]}"; i+=j))
     do
         range_list=("${whois[@]:i:j}")
