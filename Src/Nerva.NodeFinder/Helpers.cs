@@ -10,10 +10,13 @@ namespace Nerva.NodeFinder
         {
             start = end = null;
 
-            if (!input.Contains("/"))
-                return false;
-
             string[] s1 = input.Split('/');
+            if (s1.Length == 1)
+            {
+                start = end = s1[0];
+                return true;
+            }
+
             uint mask = ~(0xFFFFFFFF >> int.Parse(s1[1]));
 
             uint ip = ToUint(s1[0]);
