@@ -31,13 +31,13 @@ namespace Nerva.NodeFinder
             }
         }
 
-        public static void VerifyPing(string host, TcpClient client)
+        public static void VerifyPing(string host, Tuple<TcpClient, ThreadInfo> input)
         {
             Log.Instance.Write($"{host}: Verifying");
 
             try
             {
-                NetworkStream ns = client.GetStream();
+                NetworkStream ns = input.Item1.GetStream();
 
                 object peerlist = null;
 
@@ -61,11 +61,12 @@ namespace Nerva.NodeFinder
                 }
 
                 ns.Close();
-                client.Close();
+                input.Item1.Close();
 
                 if (peerlist != null)
                 {
-                    ProcessRemotePeerList(peerlist);
+                    input.Item2.Found++;
+                    ProcessRemotePeerList(input.Item2, peerlist);
                     Log.Instance.SetColor(ConsoleColor.Magenta);
                     Log.Instance.Write($"{host}: Adding peer");
                     Log.Instance.SetColor(ConsoleColor.White);
@@ -138,7 +139,7 @@ namespace Nerva.NodeFinder
             return true;
         }
 
-        private static void ProcessRemotePeerList(object pl)
+        private static void ProcessRemotePeerList(ThreadInfo ti, object pl)
         {
             long tsNow = (long)DateTimeHelper.TimestampNow();
             foreach (var obj in (Array)pl)
@@ -161,7 +162,7 @@ namespace Nerva.NodeFinder
                 if (NetworkConnection.Ping(ip, out client))
                 {
                     Log.Instance.Write($"{ip}: Ping success");
-                    WorkQueue.Push(ip, client);
+                    WorkQueue.Push(ip, client, ti);
                 }
                 else
                     Log.Instance.Write($"{ip}: Ping failed");

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -7,26 +8,29 @@ namespace Nerva.NodeFinder
 {
     public static class WorkQueue
     {
-        private static Dictionary<string, TcpClient> queue = new Dictionary<string, TcpClient>();
+        private static Dictionary<string, Tuple<TcpClient, ThreadInfo>> queue = new Dictionary<string, Tuple<TcpClient, ThreadInfo>>();
 
         public static bool HasWork => queue.Count > 0;
 
-        public static void Push(string value, TcpClient client)
+        public static void Push(string value, TcpClient client, ThreadInfo threadInfo)
         {
+            if (queue.ContainsKey(value))
+                return;
+
             Log.Instance.Write($"{value} added to work queue");
-            queue.Add(value, client);
+            queue.Add(value, new Tuple<TcpClient, ThreadInfo>(client, threadInfo));
         }
 
-        public static bool Pop(out string host, out TcpClient client)
+        public static bool Pop(out string host, out Tuple<TcpClient, ThreadInfo> result)
         {
             host = null;
-            client = null;
+            result = null;
 
             if (!HasWork)
                 return false;
 
             host = queue.ElementAt(0).Key;
-            client = queue[host];
+            result = queue[host];
             queue.Remove(host);
             return true;
         }

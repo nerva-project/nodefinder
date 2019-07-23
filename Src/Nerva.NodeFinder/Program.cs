@@ -7,9 +7,25 @@ using AngryWasp.Logger;
 
 namespace Nerva.NodeFinder
 {
+    public class ThreadInfo
+    {
+        public ulong ScannedHosts { get; set; } = 0;
+        public Thread Thread { get; set; }
+
+        public int Index { get; set; } = 0;
+
+        public int Pinged { get; set; } = 0;
+
+        public int Found { get; set; } = 0;
+
+        public void PrintInfo()
+        {
+            Log.Instance.Write($"Thread {Index}: Scanned {ScannedHosts}, Pinged {Pinged}, Found {Found}");
+        }
+    }
     public static class MainClass
     {
-        private static Dictionary<int, Thread> threads = new Dictionary<int, Thread>();
+        private static Dictionary<int, ThreadInfo> threads = new Dictionary<int, ThreadInfo>();
 
         [STAThread]
         public static void Main(string[] args)
@@ -26,7 +42,8 @@ namespace Nerva.NodeFinder
                     if (i == 0 || i == 10 || i == 127)
                         continue;
 
-                    CreateScanThread(index++, $"{i}.0.0.0", $"{i}.255.255.255", (id) => {
+                    CreateScanThread(index++, $"{i}.0.0.0", $"{i}.255.255.255", (id) =>
+                    {
                         threads.Remove(id);
                     });
                 }
@@ -42,18 +59,34 @@ namespace Nerva.NodeFinder
                         return;
                     }
 
-                    CreateScanThread(index++, sip, eip, (id) => {
+                    CreateScanThread(index++, sip, eip, (id) =>
+                    {
                         threads.Remove(id);
                     });
                 }
             }
+
+            Thread listener = new Thread(new ThreadStart(() =>
+            {
+                while(true)
+                {
+                    if (Console.ReadKey().Key == ConsoleKey.R)
+                    {
+                        Console.Clear();
+                        foreach (var t in threads)
+                            t.Value.PrintInfo();
+                    }
+                }
+            }));
+
+            listener.Start();
 
             Thread thread = RunPingValidatorThread();
             thread.Join();
 
             if (WorkQueue.HasWork)
                 Log.Instance.Write(Log_Severity.Error, "Work queue still has work");
-            
+
             if (threads.Count > 0)
                 Log.Instance.Write(Log_Severity.Error, "Threads are still active");
 
@@ -64,7 +97,7 @@ namespace Nerva.NodeFinder
         {
             Thread thread = new Thread(new ThreadStart(() =>
             {
-                while(true)
+                while (true)
                 {
                     if (!WorkQueue.HasWork)
                     {
@@ -76,11 +109,11 @@ namespace Nerva.NodeFinder
                     }
 
                     string host;
-                    TcpClient client;
-                    if (!WorkQueue.Pop(out host, out client))
+                    Tuple<TcpClient, ThreadInfo> result;
+                    if (!WorkQueue.Pop(out host, out result))
                         continue;
 
-                    NetworkConnection.VerifyPing(host, client);
+                    NetworkConnection.VerifyPing(host, result);
                 }
             }));
 
@@ -93,21 +126,30 @@ namespace Nerva.NodeFinder
             uint start = Helpers.ToUint(startIp);
             uint end = Helpers.ToUint(endIp);
 
-            Thread thread = new Thread(new ThreadStart(() =>
+            ThreadInfo ti = new ThreadInfo();
+            ti.Index = index;
+
+            ti.Thread = new Thread(new ThreadStart(() =>
             {
                 for (uint j = start; j <= end; j++)
                 {
                     string ip = Helpers.ToIP(j);
                     TcpClient client;
+
                     if (NetworkConnection.Ping(ip, out client))
-                        WorkQueue.Push(ip, client);
+                    {
+                        ti.Pinged++;
+                        WorkQueue.Push(ip, client, ti);
+                    }
+
+                    ti.ScannedHosts++;
                 }
 
                 finishedAction.Invoke(index);
             }));
 
-            thread.Start();
-            threads.Add(index, thread);
+            threads.Add(index, ti);
+            ti.Thread.Start();
         }
     }
 }
