@@ -75,61 +75,54 @@ namespace Nerva.NodeFinder
             return false;
         }
 
-        private static bool Read(string host, NetworkStream ns, out Header header, out Section section)
+        public static bool ReadNetworkStream(NetworkStream networkStream, int expectedLength, out byte[] buffer)
         {
-            Thread.Sleep(25);
+            buffer = new byte[expectedLength];
+            int x = 0, y = 0;
 
-            header = null;
-            section = null;
+            Thread.Sleep(250);
 
-            byte[] headerBuffer = new byte[33];
-
-            int offset = 0;
-            int i = ns.Read(headerBuffer, 0, headerBuffer.Length);
-
-            if (i < headerBuffer.Length)
-            {
-                Log.Instance.Write($"{host}: Buffer is insufficient length");
-                return false;
-            }
-
-            header = Header.FromBytes(headerBuffer, ref offset);
-
-            if (header == null)
-            {
-                Log.Instance.Write(Log_Severity.Error, $"{host}: Invalid response from remote node");
-                return false;
-            }
-
-            offset = 0;
-            byte[] buffer = new byte[header.Cb];
-
-            int x = 0;
-            int y = 0;
             do
             {
                 try
                 {
-                    y = ns.Read(buffer, x, buffer.Length);
+                    y = networkStream.Read(buffer, x, buffer.Length);
                     x += y;
-                    Thread.Sleep(25);
+                    Thread.Sleep(250);
                 }
                 catch (Exception ex)
                 {
                     Log.Instance.WriteNonFatalException(ex);
+                    Log.Instance.Write(Log_Severity.Error, $"Failed to read data. Expected {expectedLength} bytes, got {x}");
                     return false;
                 }
 
             } while (x < buffer.Length);
 
-            //read loop broke before we read as many bytes as the header says we need
-            if (x < buffer.Length)
+            return true;
+        }
+
+        private static bool Read(string host, NetworkStream ns, out Header header, out Section section)
+        {
+            header = null;
+            section = null;
+            byte[] buffer;
+            int offset = 0;
+
+            if (!ReadNetworkStream(ns, 33, out buffer))
+                return false;
+
+            header = Header.FromBytes(buffer, ref offset);
+            offset = 0;
+
+            if (header == null)
             {
-                Log.Instance.Write(Log_Severity.Error, $"{host}: Invalid response from remote node");
+                Log.Instance.Write(Log_Severity.Error, $"{host}: Invalid header remote node");
                 return false;
             }
 
-            section = null;
+            if (!ReadNetworkStream(ns, (int)header.Cb, out buffer))
+                return false;
 
             switch (header.Command)
             {
