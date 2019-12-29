@@ -11,18 +11,9 @@
             "presentation": {
                 "reveal": "silent"
             },
-            "args": ["build", "-c", "Debug"],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "build-release",
-            "command": "dotnet",
-            "type": "shell",
-            "group": "build",
-            "presentation": {
-                "reveal": "silent"
-            },
-            "args": ["build", "-c", "Release"],
+            "args": [
+                "build", "-c", "debug", "/p:GenerateFullPaths=true"
+            ],
             "problemMatcher": "$msCompile"
         }
     ]

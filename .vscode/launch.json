@@ -5,9 +5,9 @@
             "name": "Debug",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceRoot}/Bin/Debug/Nerva.NodeFinder.dll",
+            "program": "${workspaceRoot}/Bin/Debug/NodeFinder",
             "cwd": "${workspaceRoot}/Bin",
-            "console": "integratedTerminal",
+            "console": "externalTerminal",
             "preLaunchTask": "build-debug",
             "args":[]
         },

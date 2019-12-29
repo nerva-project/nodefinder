@@ -2,7 +2,7 @@
   <Import Project="../Nerva.NodeFinder.targets"/>
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <AssemblyName>Nerva.NodeFinder</AssemblyName>
+    <AssemblyName>NodeFinder</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="*"/>
