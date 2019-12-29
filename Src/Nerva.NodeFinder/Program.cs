@@ -14,9 +14,9 @@ namespace Nerva.NodeFinder
 
         public int Index { get; set; } = 0;
 
-        public int Pinged { get; set; } = 0;
+        public ulong Pinged { get; set; } = 0;
 
-        public int Found { get; set; } = 0;
+        public ulong Found { get; set; } = 0;
 
         public void PrintInfo()
         {
@@ -65,6 +65,25 @@ namespace Nerva.NodeFinder
                     });
                 }
             }
+
+            System.Timers.Timer tmr = new System.Timers.Timer(60000);
+            tmr.Elapsed += (s, e) =>
+            {
+                ulong scanned = 0, pinged = 0, found = 0;
+
+                foreach (var t in threads.Values)
+                {
+                    scanned += t.ScannedHosts;
+                    pinged += t.Pinged;
+                    found += t.Found;
+
+                    t.ScannedHosts = 0;
+                }
+
+                Log.Instance.Write($"Scanning {scanned / 60} hosts per second, Pinged {pinged}, Found {found}");          
+            };
+
+            tmr.Start();
 
             Thread listener = new Thread(new ThreadStart(() =>
             {
