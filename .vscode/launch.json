@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug",
+            "name": "Debug-Finder",
             "type": "coreclr",
             "request": "launch",
             "program": "${workspaceRoot}/Bin/Debug/NodeFinder",
@@ -10,6 +10,16 @@
             "console": "externalTerminal",
             "preLaunchTask": "build-debug",
             "args":[]
+        },
+        {
+            "name": "Debug-Validator",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceRoot}/Bin/Debug/NodeValidator",
+            "cwd": "${workspaceRoot}/Bin",
+            "console": "externalTerminal",
+            "preLaunchTask": "build-debug",
+            "args":["--host", "104.248.36.57"]
         },
     ]
 }
