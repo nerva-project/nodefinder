@@ -13,5 +13,8 @@ hosts=(178.128.103.76 104.248.36.57 206.189.68.68 178.128.165.236)
 for i in "${hosts[@]}"
 do
     echo Testing host $i
-    ${bin} --host $i
+    ${bin} --host $i &> /dev/null
+    if [ $? == 1 ]; then
+        echo $i SUCCESS!
+    fi
 done
