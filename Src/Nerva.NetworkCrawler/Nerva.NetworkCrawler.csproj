@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../Nerva.NodeFinder.targets"/>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>NetworkCrawler</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="*"/>
+  </ItemGroup>
+</Project>
