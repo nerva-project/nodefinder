@@ -1,7 +1,8 @@
 #!/bin/bash
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-bin=${dir}/Bin/Release/publish/NodeValidator
+validator=${dir}/Bin/Release/publish/NodeValidator
+crawler=${dir}/Bin/Release/publish/NetworkCrawler
 touch ${dir}/nodelist
 
 digitalocean=14061
@@ -16,7 +17,7 @@ function scan_cidr()
     hosts=($(prips $1))
     for host in "${hosts[@]}"
     do
-        ${bin} --host $host &> /dev/null
+        ${validator} --host $host &> /dev/null
         if [ $? == 1 ]; then
             echo -e ${GREEN}${host}${NC}
             echo $host >> ${dir}/nodelist
@@ -39,14 +40,15 @@ function scan_asn()
             scan_cidr $x &
             ((counter++))
 
-            if [ "$counter" -gt 8 ];then
+            if [ "$counter" -gt 40 ];then
                 wait
                 echo "Resetting batch counter"
                 counter=0
             fi
         done
-        
     done
+
+    # crawl the node list to expand the results
 }
 
 scan_asn ${digitalocean}

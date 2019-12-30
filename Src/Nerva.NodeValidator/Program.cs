@@ -20,22 +20,10 @@ namespace Nerva.NodeFinder
             }
 
             string host = clp["--host"].Value;
-            TcpClient client;
+            NetworkConnection nc = new NetworkConnection();
+            object pl = nc.Run(host);
 
-            if (!NetworkConnection.Ping(host, out client))
-            {
-                Log.Instance.Write(Log_Severity.Error, "Validation failed. No ping");
-                return 0;
-            }
-
-            if (!NetworkConnection.VerifyPing(host, client))
-            {
-                Log.Instance.Write(Log_Severity.Error, "Validation failed. Node not detected");
-                return 0;
-            }
-
-            Log.Instance.Write("Verified OK");
-            return 1;
+            return (pl != null) ? 1 : 0;
         }
     }
 }

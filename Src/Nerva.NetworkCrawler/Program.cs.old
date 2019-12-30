@@ -1,0 +1,160 @@
+﻿using System;
+using AngryWasp.Logger;
+using AngryWasp.Helpers;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using Nerva.Levin;
+using System.Threading;
+using System.Linq;
+using System.Diagnostics;
+
+namespace Nerva.NodeFinder
+{
+    public static class MainClass
+    {
+        [STAThread]
+        public static void Main(string[] args)
+        {
+            Log.CreateInstance(false);
+            Log.Instance.SetColor(ConsoleColor.DarkGray);
+
+            string[] hosts = new string[]
+            {
+                "104.248.36.57",
+                "144.91.107.167",
+                "178.128.103.76",
+                "178.128.165.236",
+                "206.189.68.68"
+            };
+
+            Crawler c = new Crawler();
+
+            foreach (var h in hosts)
+                c.ProbeNode(h);
+
+            Thread worker = c.CreateWorkerThread();
+
+            worker.Start();
+            worker.Join();
+        }
+    }
+
+    public class Crawler
+    {
+        Queue<string> workQueue = new Queue<string>();
+        HashSet<string> allNodes = new HashSet<string>();
+
+        object _lock = new object();    
+
+        int foundCount = 0;
+        public Thread CreateWorkerThread()
+        {
+            return new Thread(new ThreadStart(() =>
+            {
+                try
+                {
+                    ulong timeWithoutWork = 0;
+                    while (true)
+                    {
+                        if (workQueue.Count == 0)
+                        {
+                            if (timeWithoutWork >= 60 * 1000 * 10)
+                            {
+                                //10 minutes without work
+                                Console.ForegroundColor = ConsoleColor.Yellow;
+                                Console.WriteLine("Time without work exceeded 10 minutes");
+                                Console.WriteLine($"Found {foundCount} nodes. Quitting");
+                                Console.ForegroundColor = ConsoleColor.White;
+                                timeWithoutWork = 0;
+                                break;
+                            }
+                            timeWithoutWork += 100;
+                            Thread.Sleep(100);
+                            continue;
+                        }
+
+                        string host = null;
+
+                        lock(_lock)
+                        {
+                            host = workQueue.Dequeue();
+                        }
+
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                        Console.WriteLine($"TESTING: {host}, {workQueue.Count} remaining");
+                        Console.ForegroundColor = ConsoleColor.White;
+                        ProbeNode(host);
+                    }
+                } 
+                catch (Exception ex)
+                {
+                    Debugger.Break();
+                }
+            }));
+        }
+
+        public void ProbeNode(string host, int port = 17565)
+        {
+            NetworkConnection nc = new NetworkConnection();
+            object pl = nc.Run(host, port);
+
+            int count = 0;
+
+            if (pl != null)
+            {
+                ++foundCount;
+
+                object[] sec = (object[])pl;
+                foreach (var s in sec)
+                {
+                    Section entry = (Section)s;
+                    Section adr = (Section)entry.Entries["adr"];
+                    Section addr = (Section)adr.Entries["addr"];
+
+                    long lastSeen = (long)entry.Entries["last_seen"];
+                    ulong now = DateTimeHelper.TimestampNow();
+                    ulong diff = now - (ulong)lastSeen;
+
+                    if (diff > 60 * 60 * 4)
+                        continue; //last seen more than 4 hour ago
+
+                    uint ipInt = 0;
+                    
+                    if (addr.Entries.ContainsKey("m_ip"))
+                        ipInt = (uint)addr.Entries["m_ip"];
+
+                    if (ipInt == 0)
+                        continue;
+
+                    string ip = ToIP(ipInt);
+                    
+                    lock(_lock)
+                    {
+                        if (!allNodes.Contains(ip))
+                        {
+                            allNodes.Add(ip);
+                            ++count;
+                            workQueue.Enqueue(ip);
+                        }  
+                    }
+                }
+
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"SUCCESS: {host}, {count} new nodes");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($" FAILED: {host}");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+        }
+
+        public static string ToIP(uint ip)
+        {
+            return String.Format("{3}.{2}.{1}.{0}",
+                ip >> 24, (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff);
+        }
+    }
+}

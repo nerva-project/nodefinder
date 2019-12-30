@@ -59,6 +59,8 @@ namespace Nerva.NodeFinder
 
         public object VerifyPing(string host, int port, TcpClient client)
         {
+            Log.Instance.Write($"{host}: Validating");
+
             try
             {
                 NetworkStream ns = client.GetStream();
@@ -66,6 +68,7 @@ namespace Nerva.NodeFinder
                 object peerlist = null;
 
                 byte[] handshake = new Handshake().Create();
+                Log.Instance.Write($"{host}: Sending handshake packet");
 
                 ns.Write(handshake, 0, handshake.Length);
 
@@ -111,8 +114,6 @@ namespace Nerva.NodeFinder
                     y = networkStream.Read(buffer, x, buffer.Length);
                     x += y;
 
-                    //thread sleeps for 250ms between reads, so 20 read failures gives us 5 seconds without data.
-                    //should be able to safely conclude no data is coming and break
                     if (y > 0)
                         emptyReadCount = 0;
                     else

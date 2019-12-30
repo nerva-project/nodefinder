@@ -1,0 +1,17 @@
+#!/bin/bash
+dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+bin=${dir}/Bin/Release/publish/NodeValidator
+
+#178.128.103.76  xnv-1
+#104.248.36.57   xnv-2
+#206.189.68.68   xnv-3
+#178.128.165.236 xnv-4
+
+hosts=(178.128.103.76 104.248.36.57 206.189.68.68 178.128.165.236)
+
+for i in "${hosts[@]}"
+do
+    ${bin} --host $i
+    echo ""
+done

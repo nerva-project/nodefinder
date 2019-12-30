@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using Nerva.Levin;
 using System.Threading;
 using System.Linq;
+using System.Diagnostics;
 
 namespace Nerva.NodeFinder
 {
@@ -19,59 +20,37 @@ namespace Nerva.NodeFinder
             Log.Instance.SetColor(ConsoleColor.DarkGray);
 
             if (clp["--host"] == null)
+            {
                 Log.Instance.Write(Log_Severity.Fatal, "Need a host");
+            }
+
+            string host = clp["--host"].Value;
 
             Crawler c = new Crawler();
-            c.ProbeNode(clp["--host"].Value);
-            Thread worker = c.CreateWorkerThread();
 
-            worker.Start();
-            worker.Join();
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"Crawling seed {host}");
+            Console.ForegroundColor = ConsoleColor.White;
+            c.ProbeNode(host);
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"Found {c.AllNodes.Count} nodes, verified {c.VerifiedNodes.Count}");
+            Console.ForegroundColor = ConsoleColor.White;
         }
     }
 
     public class Crawler
     {
-        ConcurrentDictionary<string, Tuple<string, ushort, ushort>> workQueue = new ConcurrentDictionary<string, Tuple<string, ushort, ushort>>();
+        HashSet<string> verifiedNodes = new HashSet<string>();
         HashSet<string> allNodes = new HashSet<string>();
-        
-        int foundCount = 0;
-        public Thread CreateWorkerThread()
-        {
-            return new Thread(new ThreadStart(() =>
-            {
-                ulong timeWithoutWork = 0;
-                while (true)
-                {
-                    if (workQueue.IsEmpty)
-                    {
-                        if (timeWithoutWork >= 60 * 1000 * 10)
-                        {
-                            //10 minutes without work
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.WriteLine("Time without work exceeded 10 minutes");
-                            Console.WriteLine($"Found {foundCount} nodes");
-                            Console.ForegroundColor = ConsoleColor.White;
-                        }
-                        timeWithoutWork += 100;
-                        Thread.Sleep(100);
-                        continue;
-                    }
 
-                    Tuple<string, ushort, ushort> val;
-                    //val.Item3 contains the rpc port. do we need it?
-                    if (workQueue.TryRemove(workQueue.Keys.First(), out val))
-                    {
-                        timeWithoutWork = 0;
-                        ProbeNode(val.Item1, val.Item2);
-                    }
-                }
-            }));
-        }
+        public HashSet<string> AllNodes => allNodes;
+        public HashSet<string> VerifiedNodes => verifiedNodes;
 
         public void ProbeNode(string host, int port = 17565)
         {
-            allNodes.Add(host);
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.Write($"{host.PadLeft(15)}: ");
 
             NetworkConnection nc = new NetworkConnection();
             object pl = nc.Run(host, port);
@@ -79,10 +58,9 @@ namespace Nerva.NodeFinder
             if (pl != null)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"SUCCESS: {host}:{port}");
+                Console.WriteLine("OK");
                 Console.ForegroundColor = ConsoleColor.White;
-
-                ++foundCount;
+                verifiedNodes.Add(host);
 
                 object[] sec = (object[])pl;
                 foreach (var s in sec)
@@ -95,25 +73,35 @@ namespace Nerva.NodeFinder
                     ulong now = DateTimeHelper.TimestampNow();
                     ulong diff = now - (ulong)lastSeen;
 
-                    if (diff > 60 * 60 * 4)
-                        continue; //last seen more than 4 hour ago
+                    uint ipInt = 0;
+                    
+                    if (addr.Entries.ContainsKey("m_ip"))
+                        ipInt = (uint)addr.Entries["m_ip"];
 
-                    uint ipInt = (uint)addr.Entries["m_ip"];
                     if (ipInt == 0)
                         continue;
 
                     string ip = ToIP(ipInt);
-                    ushort p2pPort = (ushort)addr.Entries["m_port"];
-                    ushort rpcPort = (ushort)entry.Entries["rpc_port"];
-
+                    
                     if (!allNodes.Contains(ip))
-                        workQueue.TryAdd(ip, new Tuple<string, ushort, ushort>(ip, p2pPort, rpcPort));
+                    {
+                        allNodes.Add(ip);
+                        ProbeNode(ip);
+                    }
+                    else
+                    {
+                        //Console.ForegroundColor = ConsoleColor.DarkGray;
+                        //Console.Write($"{ip.PadLeft(15)}: ");
+                        //Console.ForegroundColor = ConsoleColor.Cyan;
+                        //Console.WriteLine("DUP");
+                        //Console.ForegroundColor = ConsoleColor.White;
+                    }
                 }
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($" FAILED: {host}:{port}");
+                Console.WriteLine("BAD");
                 Console.ForegroundColor = ConsoleColor.White;
             }
         }
