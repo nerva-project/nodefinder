@@ -22,7 +22,7 @@ namespace Nerva.NodeFinder
             else
                 Log.Instance.Write("Ping: OK");
                 
-            object pl = VerifyPing(host, port, client);
+            object pl = VerifyPing(host, client);
             
             if (pl == null)
             {
@@ -57,7 +57,7 @@ namespace Nerva.NodeFinder
             }
         }
 
-        public object VerifyPing(string host, int port, TcpClient client)
+        public object VerifyPing(string host, TcpClient client)
         {
             Log.Instance.Write($"{host}: Validating");
 

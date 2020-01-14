@@ -2,32 +2,32 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug-Finder",
+            "name": "Finder",
             "type": "coreclr",
             "request": "launch",
             "program": "${workspaceRoot}/Bin/Debug/NodeFinder",
             "cwd": "${workspaceRoot}/Bin",
-            "console": "externalTerminal",
+            "console": "integratedTerminal",
             "preLaunchTask": "build-debug",
             "args":[]
         },
         {
-            "name": "Debug-Validator",
+            "name": "Validator",
             "type": "coreclr",
             "request": "launch",
             "program": "${workspaceRoot}/Bin/Debug/NodeValidator",
             "cwd": "${workspaceRoot}/Bin",
-            "console": "externalTerminal",
+            "console": "integratedTerminal",
             "preLaunchTask": "build-debug",
-            "args":["--host", "104.248.36.57"]
+            "args":["--host", "178.128.165.236", "--testnet"]
         },
         {
-            "name": "Debug-Crawler",
+            "name": "Crawler",
             "type": "coreclr",
             "request": "launch",
             "program": "${workspaceRoot}/Bin/Debug/NetworkCrawler",
             "cwd": "${workspaceRoot}/Bin",
-            "console": "externalTerminal",
+            "console": "integratedTerminal",
             "preLaunchTask": "build-debug",
             "args":["--host", "178.128.165.236"]
         },

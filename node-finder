@@ -30,22 +30,15 @@ function scan_cidr()
 function scan_asn()
 {
     whois=($(whois -h whois.radb.net -- "-i origin AS$1" | grep -Eo "([0-9.]+){4}/[0-9]+"))
-    j=256
-    counter=0
+    j=128
     for((i=0; i < "${#whois[@]}"; i+=j))
     do
         range_list=("${whois[@]:i:j}")
         for x in "${range_list[@]}"
         do
             scan_cidr $x &
-            ((counter++))
-
-            if [ "$counter" -gt 40 ];then
-                wait
-                echo "Resetting batch counter"
-                counter=0
-            fi
         done
+        wait
     done
 
     # crawl the node list to expand the results
