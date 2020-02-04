@@ -2,7 +2,7 @@
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 scanner=${dir}/External/c-syn-scan-network/syn-scan-network
-validator=${dir}/Bin/Release/publish/NodeValidator
+validator=${dir}/External/Nerva.Tools/Bin/Release/NodeValidator
 touch ${dir}/nodelist
 
 digitalocean=14061

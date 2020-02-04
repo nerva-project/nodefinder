@@ -1,8 +1,8 @@
 #!/bin/bash
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-validator=${dir}/Bin/Release/publish/NodeValidator
-crawler=${dir}/Bin/Release/publish/NetworkCrawler
+validator=${dir}/External/Nerva.Tools/Bin/Release/NodeValidator
+crawler=${dir}/External/Nerva.Tools/Bin/Release/NetCrawler
 touch ${dir}/nodelist
 
 digitalocean=14061
